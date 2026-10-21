@@ -6,6 +6,8 @@ import {
   clubKey,
   findClashes,
   formatResults,
+  formatResultsCsv,
+  resultsFileBase,
   landingRotation,
   mulberry32,
   overflowClubs,
@@ -241,6 +243,34 @@ describe("entry parsing", () => {
         "  Drift",
       ].join("\n"),
     );
+  });
+
+  it("writes the finished brackets as csv and a safe file name", () => {
+    const csv = formatResultsCsv(
+      [
+        {
+          team: { id: "1", name: 'Red, "Blue" Pandas', club: "Harbor" },
+          bracketIndex: 0,
+        },
+        {
+          team: { id: "2", name: "Drift", club: "" },
+          bracketIndex: 1,
+        },
+      ],
+      3,
+    );
+    assert.equal(
+      csv,
+      [
+        "Bracket,Team,Club",
+        'Bracket A,"Red, ""Blue"" Pandas",Harbor',
+        "Bracket B,Drift,",
+        "Bracket C,,",
+      ].join("\n"),
+    );
+    assert.equal(resultsFileBase("ACE ZONE!"), "ace-zone");
+    assert.equal(resultsFileBase("---"), "bracket-draw");
+    assert.equal(resultsFileBase("  "), "bracket-draw");
   });
 
   it("rejects a saved draft that is not a team list", () => {

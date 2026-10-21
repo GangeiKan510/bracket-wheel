@@ -24,6 +24,8 @@ import {
   createId,
   cryptoRng,
   formatResults,
+  formatResultsCsv,
+  resultsFileBase,
   groupTeamsForList,
   landingRotation,
   MAX_BRACKETS,
@@ -343,6 +345,25 @@ export function DrawApp() {
     setPhaseBoth("setup");
   }
 
+  function downloadResults(kind: "csv" | "txt") {
+    const base = resultsFileBase(eventName);
+    const body =
+      kind === "csv"
+        ? formatResultsCsv(placed, bracketCount)
+        : formatResults(placed, bracketCount, eventName);
+    const blob = new Blob([kind === "csv" ? `\uFEFF${body}` : body], {
+      type: `${kind === "csv" ? "text/csv" : "text/plain"};charset=utf-8`,
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${base}-brackets.${kind}`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   async function copyResults() {
     const text = formatResults(placed, bracketCount, eventName);
     try {
@@ -414,7 +435,7 @@ export function DrawApp() {
       return {
         kicker: "Draw complete",
         title: eventName.trim() || "All set",
-        sub: bracketSizeLabel(teams.length, bracketCount),
+        sub: "Spin again",
         accent: undefined as string | undefined,
       };
     }
@@ -728,11 +749,22 @@ export function DrawApp() {
 
           {phase === "done" ? (
             <div className="actions">
-              <button type="button" className="btn-gold" onClick={startDraw}>
-                Spin again
-              </button>
               <button type="button" className="btn-ghost" onClick={copyResults}>
                 {copied ? "Copied" : "Copy results"}
+              </button>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => downloadResults("csv")}
+              >
+                Download CSV
+              </button>
+              <button
+                type="button"
+                className="btn-ghost"
+                onClick={() => downloadResults("txt")}
+              >
+                Download list
               </button>
               <button
                 type="button"

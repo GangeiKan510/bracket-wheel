@@ -361,6 +361,45 @@ export function formatResults(
   return lines.join("\n").trim();
 }
 
+function csvCell(value: string): string {
+  if (/[",\n\r]/.test(value)) return `"${value.replace(/"/g, '""')}"`;
+  return value;
+}
+
+export function formatResultsCsv(
+  placements: readonly Placement[],
+  bracketCount: number,
+): string {
+  const count = clampBracketCount(bracketCount);
+  const lines = ["Bracket,Team,Club"];
+  for (let index = 0; index < count; index++) {
+    const bracket = bracketName(index);
+    const group = placements.filter(
+      (placement) => placement.bracketIndex === index,
+    );
+    if (group.length === 0) {
+      lines.push([csvCell(bracket), "", ""].join(","));
+      continue;
+    }
+    for (const placement of group) {
+      lines.push(
+        [bracket, placement.team.name, cleanLabel(placement.team.club, 80)]
+          .map(csvCell)
+          .join(","),
+      );
+    }
+  }
+  return lines.join("\n");
+}
+
+export function resultsFileBase(eventName: string): string {
+  const slug = cleanLabel(eventName, 80)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  return slug || "bracket-draw";
+}
+
 export function sanitizeTeams(value: unknown): DrawTeam[] {
   if (!Array.isArray(value)) return [];
   const teams: DrawTeam[] = [];
